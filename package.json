@@ -1,5 +1,5 @@
 {
-  "name": "hookhub-hook-github-slack",
+  "name": "hookhub-slack-webhook-out",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
