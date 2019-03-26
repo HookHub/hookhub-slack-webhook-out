@@ -8,6 +8,9 @@ const smb = require('slack-message-builder')
 const rp = require('request-promise')
 
 var config = null
+var configurable = function (newConfig) {
+  config = newConfig
+}
 
 /* Default handler. */
 router.use('/', function (req, res, next) {
@@ -75,5 +78,4 @@ var generateMessage = function (hookhub_doc) {
 }
 
 module.exports = router
-module.exports.configurable = true
-module.exports.config = config
+module.exports.configurable = configurable
