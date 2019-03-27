@@ -12,6 +12,10 @@ var configurable = function (newConfig) {
   config = newConfig
 }
 
+router.use('/', function (req, res, next) {
+  res.hookhub.stack.push('hookhub-slack-webhook-out')
+})
+
 /* Default handler. */
 router.use('/', function (req, res, next) {
   if (!config) { throw new Error('Missing configuration') }
@@ -30,17 +34,17 @@ router.use('/', function (req, res, next) {
   }
 
   rp(post_options).then(function (data) {
-    return {
+    res.hookhub.result = {
       result: 'OK',
       message: data
     }
+    next()
   }).catch(function (err) {
-    return {
+    res.hookhub.result = {
       result: 'ERROR',
       message: err
     }
-  }).then(function (result_set) {
-    res.send(result_set)
+    next('route')
   })
 })
 
