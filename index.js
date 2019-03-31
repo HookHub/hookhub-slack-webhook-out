@@ -12,19 +12,28 @@ var configurable = function (newConfig) {
   config = newConfig
 }
 
-router.use('/', function (req, res, next) {
-  res.hookhub.stack.push('hookhub-slack-webhook-out')
-})
+// Functions
+function stackRegistration (req, res, next) {
+  res.locals.hookhub.stack.push('hookhub-slack-webhook-out')
+  next()
+}
 
-/* Default handler. */
-router.use('/', function (req, res, next) {
-  if (!config) { throw new Error('Missing configuration') }
-
-  if (!res.hookhub.doc) { throw new Error('Missing hookhub.doc') }
-
+function defaultHandler (req, res, next) {
   debug('Handling request')
 
-  let post_body = generateMessage(res.hookhub.doc)
+  if (!config) {
+    throw new Error('Missing configuration')
+  }
+
+  if (!res.locals.hookhub.doc) {
+    throw new Error('Missing hookhub.doc')
+  }
+
+  if (res.locals.hookhub.result.result !== 'OK') {
+    throw new Error('Broken flow')
+  }
+
+  let post_body = generateMessage(res.locals.hookhub.doc)
 
   var post_options = {
     method: 'POST',
@@ -34,19 +43,19 @@ router.use('/', function (req, res, next) {
   }
 
   rp(post_options).then(function (data) {
-    res.hookhub.result = {
+    res.locals.hookhub.result = {
       result: 'OK',
       message: data
     }
     next()
   }).catch(function (err) {
-    res.hookhub.result = {
+    res.locals.hookhub.result = {
       result: 'ERROR',
       message: err
     }
-    next('route')
+    next('error')
   })
-})
+}
 
 var generateMessage = function (hookhub_doc) {
   var slack_message = smb()
@@ -80,6 +89,9 @@ var generateMessage = function (hookhub_doc) {
 
   return slack_message.json()
 }
+
+// Routes
+router.all('/', stackRegistration, defaultHandler)
 
 module.exports = router
 module.exports.configurable = configurable
